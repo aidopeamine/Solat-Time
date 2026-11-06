@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SolatTime</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f7f5;
+      color: #20352e;
+    }
+
+    header {
+      background: #164e3d;
+      color: white;
+      padding: 22px 30px;
+    }
+
+    header h1 { margin: 0 0 6px; font-size: 28px; }
+    header p { margin: 0; color: #d5e9df; }
+
+    nav {
+      display: flex;
+      gap: 10px;
+      padding: 14px 30px;
+      background: white;
+      border-bottom: 1px solid #dce5df;
+    }
+
+    nav button {
+      border: none;
+      border-radius: 8px;
+      padding: 11px 18px;
+      cursor: pointer;
+      background: #e8efeb;
+      color: #164e3d;
+      font-weight: 600;
+    }
+
+    nav button.active, .primary {
+      background: #197653;
+      color: white;
+    }
+
+    main {
+      max-width: 1050px;
+      margin: 25px auto;
+      padding: 0 24px;
+    }
+
+    .page h2 { margin-top: 0; }
+
+    .panel {
+      background: white;
+      border: 1px solid #e0e8e3;
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input, select, textarea {
+      padding: 11px;
+      border: 1px solid #cbd8d0;
+      border-radius: 7px;
+      font: inherit;
+    }
+
+    button { font: inherit; }
+
+    .controls button, form button {
+      padding: 11px 16px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .prayer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .prayer-card {
+      padding: 18px;
+      background: #edf5f0;
+      border-radius: 10px;
+    }
+
+    .prayer-card h3 {
+      margin: 0 0 8px;
+      color: #39735b;
+      font-size: 15px;
+    }
+
+    .prayer-card p {
+      margin: 0;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .muted { color: #65766c; font-size: 14px; }
+    .status { margin-top: 14px; color: #39735b; }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    form input, form select, form textarea {
+      flex: 1 1 200px;
+      min-width: 0;
+    }
+
+    form textarea {
+      flex-basis: 100%;
+      min-height: 75px;
+      resize: vertical;
+    }
+
+    #reminderList { padding-left: 22px; }
+    #reminderList li { margin: 15px 0; }
+
+    #reminderList button {
+      margin-left: 8px;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .delete { background: #f8e6e3; color: #9a3429; }
+    .edit { background: #e6eee9; color: #164e3d; }
+
+    .reminder-details {
+      display: block;
+      margin-top: 5px;
+      color: #65766c;
+      font-size: 14px;
+    }
+
+    .dashboard-reminder {
+      background: #edf5f0;
+      border-left: 4px solid #197653;
+      border-radius: 9px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .dashboard-reminder h4 {
+      margin: 0 0 7px;
+      color: #39735b;
+      font-size: 14px;
+    }
+
+    .dashboard-reminder p {
+      margin: 0 0 5px;
+      font-weight: 600;
+    }
+
+    .dashboard-reminder small {
+      color: #65766c;
+    }
+
+    [hidden] { display: none !important; }
+
+    @media (max-width: 600px) {
+      .prayer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding: 0 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>☾ SolatTime</h1>
+    <p>Your daily prayer times and Islamic activity planner</p>
+  </header>
+
+  <nav>
+    <button class="active" id="dashboardTab">Prayer Dashboard</button>
+    <button id="remindersTab">Events & Activities</button>
+  </nav>
+
+  <main>
+    <section class="page" id="dashboardPage">
+      <h2>Prayer Dashboard</h2>
+      <p class="muted">Check today's prayer schedule for your selected location.</p>
+
+      <div class="panel">
+        <h3>Choose your location</h3>
+        <div class="controls">
+          <select id="locationSelect">
+            <option value="JHR02">Johor Bahru, Johor</option>
+            <option value="SGR01">Shah Alam, Selangor</option>
+            <option value="WLY01">Kuala Lumpur</option>
+            <option value="PHG03">Kuantan, Pahang</option>
+          </select>
+          <button class="primary" id="loadPrayerTimes">Get Prayer Times</button>
+        </div>
+        <p id="apiStatus" class="status" role="status">
+          Select a location and retrieve prayer times.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Today's Schedule</h3>
+        <p class="muted" id="prayerDate">Waiting for prayer-time data...</p>
+
+        <div class="prayer-grid">
+          <div class="prayer-card"><h3>Fajr</h3><p id="Fajr">--:--</p></div>
+          <div class="prayer-card"><h3>Sunrise</h3><p id="Sunrise">--:--</p></div>
+          <div class="prayer-card"><h3>Dhuhr</h3><p id="Dhuhr">--:--</p></div>
+          <div class="prayer-card"><h3>Asr</h3><p id="Asr">--:--</p></div>
+          <div class="prayer-card"><h3>Maghrib</h3><p id="Maghrib">--:--</p></div>
+          <div class="prayer-card"><h3>Isha</h3><p id="Isha">--:--</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Next Prayer</h3>
+        <p id="nextPrayer">Load prayer times to see the next prayer.</p>
+        <p id="activitySuggestion" class="muted">
+          Your activity suggestion will appear here.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Upcoming Reminders</h3>
+
+        <div class="dashboard-reminder">
+          <h4>Islamic Event</h4>
+          <p id="dashboardEvent">No upcoming Islamic event.</p>
+          <small id="dashboardEventDate"></small>
+        </div>
+
+        <div class="dashboard-reminder">
+          <h4>Personal Activity</h4>
+          <p id="dashboardActivity">No upcoming personal activity.</p>
+          <small id="dashboardActivityDate"></small>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="remindersPage" hidden>
+      <h2>Islamic Events & Activities</h2>
+      <p class="muted">
+        Organise important Islamic events and your personal religious activities.
+      </p>
+
+      <div class="panel">
+        <h3 id="formHeading">Add an event or activity</h3>
+
+        <form id="reminderForm">
+          <select id="reminderType" required>
+            <option value="">Choose type</option>
+            <option value="event">Islamic Event</option>
+            <option value="activity">Personal Activity</option>
+          </select>
+
+          <input
+            id="reminderTitle"
+            placeholder="Event or activity name"
+            required
+            maxlength="80"
+          >
+
+          <input id="reminderDate" type="date" required>
+
+          <textarea
+            id="reminderDescription"
+            placeholder="Description (optional)"
+            maxlength="250"
+          ></textarea>
+
+          <button class="primary" id="saveReminder" type="submit">
+            Add to Planner
+          </button>
+
+          <button id="cancelEdit" type="button" hidden>
+            Cancel Edit
+          </button>
+        </form>
+
+        <p id="reminderStatus" class="status" role="status"></p>
+      </div>
+
+      <div class="panel">
+        <h3>Saved Events & Activities</h3>
+        <ul id="reminderList"></ul>
+        <p id="emptyReminders" class="muted">
+          No events or activities saved yet.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
